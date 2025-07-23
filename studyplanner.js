@@ -1,137 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>yourTutor</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="images/ytHat.png" type="image/png" />
-  <style>
-    /* Add temporary styles for better UI (if not already in style.css) */
-    .content {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
+// Store study events
+let studyEvents = JSON.parse(localStorage.getItem("studyEvents")) || [];
 
-    .planner-title {
-      font-size: 2rem;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+// Reference UI elements
+const createBtn = document.getElementById("createStudyEventButton");
+const viewBtn = document.getElementById("viewStudyEventsButton");
 
-    .study {
-      margin: 1rem 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+// Create a container to show messages and events
+const displayContainer = document.createElement("div");
+displayContainer.id = "eventDisplay";
+displayContainer.className = "event-display";
+document.querySelector("main").appendChild(displayContainer);
 
-    .study-button {
-      padding: 0.8rem 1.2rem;
-      font-size: 1rem;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 1rem;
-    }
+// Create event form (hidden by default)
+const formContainer = document.createElement("div");
+formContainer.className = "form-container";
+formContainer.innerHTML = `
+  <h2>Create a Study Event</h2>
+  <input type="text" id="subject" placeholder="Subject (e.g., Algebra)" required>
+  <input type="date" id="date" required>
+  <input type="time" id="time" required>
+  <input type="text" id="duration" placeholder="Duration (e.g., 1 hour)" required>
+  <button id="saveEventButton">Save Event</button>
+`;
+document.querySelector("main").appendChild(formContainer);
+formContainer.style.display = "none";
 
-    .study-button:hover {
-      background-color: #45a049;
-    }
+// Show form
+createBtn.addEventListener("click", () => {
+  formContainer.style.display = "block";
+  displayContainer.innerHTML = ""; // clear event display
+});
 
-    .study-form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      width: 100%;
-      max-width: 500px;
-      margin: 1rem auto;
-      background-color: #f9f9f9;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
+// Save event
+document.getElementById("saveEventButton").addEventListener("click", () => {
+  const subject = document.getElementById("subject").value.trim();
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const duration = document.getElementById("duration").value.trim();
 
-    .study-form input {
-      padding: 0.6rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
+  if (subject && date && time && duration) {
+    const newEvent = { subject, date, time, duration };
+    studyEvents.push(newEvent);
+    localStorage.setItem("studyEvents", JSON.stringify(studyEvents));
 
-    .study-events {
-      margin-top: 2rem;
-    }
+    // Show confirmation
+    displayContainer.innerHTML = `<p class="confirmation">✅ Study event saved for ${subject} on ${date} at ${time}.</p>`;
+    formContainer.style.display = "none";
+  } else {
+    displayContainer.innerHTML = `<p class="error">❗ Please fill out all fields.</p>`;
+  }
+});
 
-    .study-plan {
-      background-color: #eef6ff;
-      padding: 1rem;
-      margin: 0.5rem 0;
-      border-radius: 8px;
-      border-left: 4px solid #007BFF;
-    }
+// View study events
+viewBtn.addEventListener("click", () => {
+  formContainer.style.display = "none";
+  displayContainer.innerHTML = "<h2>📚 Your Study Events</h2>";
 
-    .logo {
-      width: 150px;
-      margin: 1rem;
-    }
+  if (studyEvents.length === 0) {
+    displayContainer.innerHTML += `<p>No study events scheduled yet.</p>`;
+    return;
+  }
 
-    .bookmark-bar {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      background-color: #333;
-      padding: 0.5rem;
-    }
+  const list = document.createElement("ul");
+  list.className = "event-list";
 
-    .bookmark-item {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
+  studyEvents.forEach((event, index) => {
+    const item = document.createElement("li");
+    item.className = "event-item";
+    item.innerHTML = `
+      <strong>${event.subject}</strong> - ${event.date} @ ${event.time} (${event.duration})
+    `;
+    list.appendChild(item);
+  });
 
-    .bookmark-item:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <a href="index.html">
-      <img src="images/yTlogo.png" alt="yourTutor Logo" class="logo" />
-    </a>
-  </header>
-
-  <nav class="bookmark-bar">
-    <a href="about.html" class="bookmark-item">About</a>
-    <a href="help.html" class="bookmark-item">Help</a>
-    <a href="planner.html" class="bookmark-item">Your Planner</a>
-  </nav>
-
-  <main class="content">
-    <section class="hero">
-      <h1 class="planner-title">Your Study Planner</h1>
-    </section>
-
-    <section class="card-section">
-      <div class="study">
-        <button class="study-button" id="createStudyEventButton">Create a Study Event</button>
-      </div>
-      <div class="study">
-        <button class="study-button" id="viewStudyEventsButton">View Study Events</button>
-      </div>
-
-      <!-- Container for the dynamic form -->
-      <div id="studyEventFormContainer"></div>
-
-      <!-- Container for study events list -->
-      <div id="studyEventsContainer" class="study-events"></div>
-    </section>
-  </main>
-
-  <script src="studyplanner.js"></script>
-</body>
-</html>
+  displayContainer.appendChild(list);
+});
